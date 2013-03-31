@@ -1,6 +1,4 @@
-csv = require \fast-csv
-{utils} = require connect
-{Readable} = require stream
+require! <[ fast-csv connect ]>
 
 const EnumHeadersConfig = <[ strict guess present absent ]>
 const DefaultHeadersConfig = \guess
@@ -17,18 +15,24 @@ const DefaultHeadersConfig = \guess
     console.log "Warning: connect-csv headers: '#headers' not in #EnumHeadersConfig, defaulting to #DefaultHeadersConfig"
     headers = DefaultHeadersConfig
 
-  return function csv (req, res, next)
+  return function csv(req, res, next)
     return next! if req._body
-    return next! unless utils.mime(req) is \text/csv'
-    req
-      ..body ||= []
-      .._body = true
-      ..setEncoding \utf8
-      data = []
+    return next! unless connect.utils.mime(req) is \text/csv
+    buf = ''
+    req.body = []
+    req._body = true
+    req.setEncoding \utf8
+    data = []
     # TODO: guess, auto
     headers = true if headers is \present
     headers = null if headers is \absent
-    csv(req, {headers})
-      ..on \data -> req.body.push it
-      ..on \end -> next!
+    fast-csv(req, {headers})
+      ..on \data ->
+        console.log \data
+        req.body.push it
+      ..on \end ->
+        console.log \going
+        console.log next
+        console.log req.body
+        next!
       ..parse!
