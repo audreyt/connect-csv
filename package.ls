@@ -3,6 +3,7 @@ author:
   name: ['Audrey Tang']
   email: 'audreyt@audreyt.org'
 name: 'connect-csv'
+keywords: <[ connect middleware csv ]>
 description: 'Connect middleware for accepting text/csv data type'
 version: '0.0.2'
 main: \lib/index.js
