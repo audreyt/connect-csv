@@ -1,38 +1,49 @@
-require! <[ fast-csv connect ]>
+require! connect
+CSV = require \csv-string
 
-const EnumHeadersConfig = <[ strict guess present absent ]>
-const DefaultHeadersConfig = \guess
+const EnumHeaderConfig = <[ strict guess present absent ]>
+const DefaultHeaderConfig = \guess
 
 ``exports`` = module.exports = (options={}) ->
   # Row type control:
   # "strict"  : object on ;header=present, array on ;header=absent or missing
   # "guess"   : if ;header is missing, guess it based on whether the first row contains numbers
   # "present" : always use object rows with first row as header
-  # "absent"  : always use array rows
+  # "absent"  : always use array rows with ["_0","_1","_2"...]
   # ["list","of","columns"]: always use object rows with specified headers
-  { headers=DefaultHeadersConfig } = options
-  unless headers in EnumHeadersConfig
-    console.log "Warning: connect-csv headers: '#headers' not in #EnumHeadersConfig, defaulting to #DefaultHeadersConfig"
-    headers = DefaultHeadersConfig
+  { header-config=DefaultHeaderConfig } = options
+  unless Array.isArray header-config or header-config in EnumHeaderConfig
+    console.log "Warning: connect-csv header: '#header-config' not in #EnumHeaderConfig, defaulting to #DefaultHeaderConfig"
+    header-config = DefaultHeaderConfig
 
   return function csv(req, res, next)
     return next! if req._body
     return next! unless connect.utils.mime(req) is \text/csv
+    header = header-config
+    if header in <[ strict guess ]>
+      for chunk in req.headers['content-type'] / ';'
+        continue unless chunk is /^\s*header=(present|absent)\s*$/i
+        header = RegExp.$1.toLowerCase!
+    header = \absent if header is \strict
     buf = ''
-    req.body = []
-    req._body = true
-    req.setEncoding \utf8
-    data = []
-    # TODO: guess, auto
-    headers = true if headers is \present
-    headers = null if headers is \absent
-    fast-csv(req, {headers})
-      ..on \data ->
-        console.log \data
-        req.body.push it
-      ..on \end ->
-        console.log \going
-        console.log next
-        console.log req.body
+    req
+      ..body = []
+      .._body = true
+      ..setEncoding \utf8
+      ..on \data -> buf += it
+      ..on \end -> try
+        buf -= /\n*$/
+        req.body = CSV.parse buf
+        if header is \guess
+          if req.body.length and req.body.0.some (is /^[-\d]/)
+            then header := \absent
+            else header := \present
+        if header is \absent and req.body.length
+          header := [ "_#i" for i til req.body.0.length ]
+        req.body.unshift header if Array.isArray header
         next!
-      ..parse!
+      catch
+        e.body = buf
+        e.status = 400
+        next e
+    return

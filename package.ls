@@ -13,14 +13,12 @@ scripts:
   test: """
     env PATH="./node_modules/.bin:$PATH" mocha
   """
-  prepublish: """
-    env PATH="./node_modules/.bin:$PATH" lsc -cj package.ls &&
-    env PATH="./node_modules/.bin:$PATH" lsc -bc bin &&
-    env PATH="./node_modules/.bin:$PATH" lsc -bc -o lib src
+  precompile: """
+    (node node_modules/LiveScript/bin/lsc -cj package.ls || echo) && (node node_modules/LiveScript/bin/lsc -c index.ls || echo)
   """
 engines: {node: '*'}
 dependencies:
-  fast-csv: \*
+  \csv-string : \*
   connect: \*
 devDependencies:
   LiveScript: \1.1.x
