@@ -2,16 +2,16 @@ require! connect
 CSV = require \csv-string
 
 const EnumHeaderConfig = <[ strict guess present absent ]>
-const DefaultHeaderConfig = \guess
+const DefaultHeaderConfig = \strict
 
 ``exports`` = module.exports = (options={}) ->
   # Row type control:
-  # "strict"  : object on ;header=present, array on ;header=absent or missing
-  # "guess"   : if ;header is missing, guess it based on whether the first row contains numbers
-  # "present" : always use object rows with first row as header
-  # "absent"  : always use array rows with ["_0","_1","_2"...]
-  # ["list","of","columns"]: always use object rows with specified headers
-  { header-config=DefaultHeaderConfig } = options
+  # "strict"  : prepend on ;header=absent, otherwise assumes ;header=present
+  # "guess"   : if ;header is missing, guess it based on whether any fields in first row begin with numbers
+  # "present" : never prepend header rows
+  # "absent"  : always prepend header rows with ["_0","_1","_2"...]
+  # ["list","of","columns"]: always prepend the specified header row
+  header-config = options.header || DefaultHeaderConfig
   unless Array.isArray header-config or header-config in EnumHeaderConfig
     console.log "Warning: connect-csv header: '#header-config' not in #EnumHeaderConfig, defaulting to #DefaultHeaderConfig"
     header-config = DefaultHeaderConfig
@@ -24,7 +24,7 @@ const DefaultHeaderConfig = \guess
       for chunk in req.headers['content-type'] / ';'
         continue unless chunk is /^\s*header=(present|absent)\s*$/i
         header = RegExp.$1.toLowerCase!
-    header = \absent if header is \strict
+    header = \present if header is \strict
     buf = ''
     req
       ..body = []

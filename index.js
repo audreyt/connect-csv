@@ -3,11 +3,11 @@
   connect = require('connect');
   CSV = require('csv-string');
   EnumHeaderConfig = ['strict', 'guess', 'present', 'absent'];
-  DefaultHeaderConfig = 'guess';
+  DefaultHeaderConfig = 'strict';
   exports = module.exports = function(options){
-    var headerConfig, ref$;
+    var headerConfig;
     options == null && (options = {});
-    headerConfig = (ref$ = options.headerConfig) != null ? ref$ : DefaultHeaderConfig;
+    headerConfig = options.header || DefaultHeaderConfig;
     if (!(Array.isArray(headerConfig) || in$(headerConfig, EnumHeaderConfig))) {
       console.log("Warning: connect-csv header: '" + headerConfig + "' not in " + EnumHeaderConfig + ", defaulting to " + DefaultHeaderConfig);
       headerConfig = DefaultHeaderConfig;
@@ -32,7 +32,7 @@
           }
         }
         if (header === 'strict') {
-          header = 'absent';
+          header = 'present';
         }
         buf = '';
         x$ = req;
