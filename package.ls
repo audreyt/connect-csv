@@ -4,7 +4,7 @@ author:
   email: 'audreyt@audreyt.org'
 name: 'connect-csv'
 description: 'Connect middleware for accepting text/csv data type'
-version: '0.0.1'
+version: '0.0.2'
 main: \lib/index.js
 repository:
   type: 'git'
