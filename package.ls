@@ -18,7 +18,7 @@ scripts:
   """
 engines: {node: '*'}
 dependencies:
-  \csv-string : \*
+  csv: \*
   connect: \*
 devDependencies:
   LiveScript: \1.1.x

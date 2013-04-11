@@ -1,7 +1,7 @@
 (function(){
   var connect, CSV, EnumHeaderConfig, DefaultHeaderConfig, split$ = ''.split, replace$ = ''.replace;
   connect = require('connect');
-  CSV = require('csv-string');
+  CSV = require('csv');
   EnumHeaderConfig = ['strict', 'guess', 'present', 'absent'];
   DefaultHeaderConfig = 'strict';
   exports = module.exports = function(options){
@@ -43,31 +43,36 @@
           return buf += it;
         });
         x$.on('end', function(){
-          var res$, i$, to$, i, e;
+          var e;
           try {
             buf = replace$.call(buf, /\n*$/, '');
-            req.body = CSV.parse(buf);
-            if (header === 'guess') {
-              if (req.body.length && req.body[0].some((function(it){
-                return /^[-\d]/.exec(it);
-              }))) {
-                header = 'absent';
-              } else {
-                header = 'present';
+            return CSV().from(buf, {
+              delimiter: ','
+            }).to.array(function(body){
+              var res$, i$, to$, i;
+              req.body = body;
+              if (header === 'guess') {
+                if (req.body.length && req.body[0].some((function(it){
+                  return /^[-\d]/.exec(it);
+                }))) {
+                  header = 'absent';
+                } else {
+                  header = 'present';
+                }
               }
-            }
-            if (header === 'absent' && req.body.length) {
-              res$ = [];
-              for (i$ = 0, to$ = req.body[0].length; i$ < to$; ++i$) {
-                i = i$;
-                res$.push("_" + i);
+              if (header === 'absent' && req.body.length) {
+                res$ = [];
+                for (i$ = 0, to$ = req.body[0].length; i$ < to$; ++i$) {
+                  i = i$;
+                  res$.push("_" + i);
+                }
+                header = res$;
               }
-              header = res$;
-            }
-            if (Array.isArray(header)) {
-              req.body.unshift(header);
-            }
-            return next();
+              if (Array.isArray(header)) {
+                req.body.unshift(header);
+              }
+              return next();
+            });
           } catch (e$) {
             e = e$;
             e.body = buf;

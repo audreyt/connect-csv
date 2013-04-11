@@ -1,5 +1,5 @@
 require! connect
-CSV = require \csv-string
+CSV = require \csv
 
 const EnumHeaderConfig = <[ strict guess present absent ]>
 const DefaultHeaderConfig = \strict
@@ -33,7 +33,7 @@ const DefaultHeaderConfig = \strict
       ..on \data -> buf += it
       ..on \end -> try
         buf -= /\n*$/
-        req.body = CSV.parse buf
+        req.body <- CSV!from(buf, delimiter: \,).to.array
         if header is \guess
           if req.body.length and req.body.0.some (is /^[-\d]/)
             then header := \absent
