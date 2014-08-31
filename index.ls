@@ -1,5 +1,6 @@
 require! connect
-CSV = require \csv
+csv-parse = require \csv-parse
+type-is = require \type-is
 
 const EnumHeaderConfig = <[ strict guess present absent ]>
 const DefaultHeaderConfig = \strict
@@ -18,7 +19,7 @@ const DefaultHeaderConfig = \strict
 
   return function csv(req, res, next)
     return next! if req._body
-    return next! unless connect.utils.mime(req) is \text/csv
+    return next! unless type-is req, \text/csv
     header = header-config
     if header in <[ strict guess ]>
       for chunk in req.headers['content-type'] / ';'
@@ -33,7 +34,7 @@ const DefaultHeaderConfig = \strict
       ..on \data -> buf += it
       ..on \end -> try
         buf -= /\n*$/
-        req.body <- CSV!from(buf, delimiter: \,).to.array
+        _, req.body <- csv-parse(buf, delimiter: \,)
         if header is \guess
           if req.body.length and req.body.0.some (is /^[-\d]/)
             then header := \absent

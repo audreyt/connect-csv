@@ -1,7 +1,8 @@
 (function(){
-  var connect, CSV, EnumHeaderConfig, DefaultHeaderConfig, split$ = ''.split, replace$ = ''.replace;
+  var connect, csvParse, typeIs, EnumHeaderConfig, DefaultHeaderConfig, split$ = ''.split, replace$ = ''.replace;
   connect = require('connect');
-  CSV = require('csv');
+  csvParse = require('csv-parse');
+  typeIs = require('type-is');
   EnumHeaderConfig = ['strict', 'guess', 'present', 'absent'];
   DefaultHeaderConfig = 'strict';
   exports = module.exports = function(options){
@@ -18,11 +19,11 @@
         if (req._body) {
           return next();
         }
-        if (connect.utils.mime(req) !== 'text/csv') {
+        if (!typeIs(req, 'text/csv')) {
           return next();
         }
         header = headerConfig;
-        if (header == 'strict' || header == 'guess') {
+        if (header === 'strict' || header === 'guess') {
           for (i$ = 0, len$ = (ref$ = split$.call(req.headers['content-type'], ';')).length; i$ < len$; ++i$) {
             chunk = ref$[i$];
             if (!/^\s*header=(present|absent)\s*$/i.test(chunk)) {
@@ -46,9 +47,9 @@
           var e;
           try {
             buf = replace$.call(buf, /\n*$/, '');
-            return CSV().from(buf, {
+            return csvParse(buf, {
               delimiter: ','
-            }).to.array(function(body){
+            }, function(_, body){
               var res$, i$, to$, i;
               req.body = body;
               if (header === 'guess') {
@@ -84,9 +85,9 @@
       return csv;
     }());
   };
-  function in$(x, arr){
-    var i = -1, l = arr.length >>> 0;
-    while (++i < l) if (x === arr[i] && i in arr) return true;
+  function in$(x, xs){
+    var i = -1, l = xs.length >>> 0;
+    while (++i < l) if (x === xs[i]) return true;
     return false;
   }
 }).call(this);
